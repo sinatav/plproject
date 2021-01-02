@@ -33,15 +33,17 @@
             ("false"                        (token-FALSE))
             ("null"                         (token-NULL))
             ("switch"                       (token-SWITCH))
-            ("case"                        (token-CASE))
+            ("case"                         (token-CASE))
 
-            ((:or (:+ (char-range #\0 #\9)) (:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9)))) (token-NUMBER (string->number lexeme)))
+            ((:: "*" (complement (:: any-string "*" any-string)) "*")                                     (token-STRING   (string->symbol lexeme)))
+            ((:or (:+ (char-range #\0 #\9)) (:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9)))) (token-NUMBER   (string->number lexeme)))
             ((:+ alphabetic)                                                                              (token-VARIABLE (string->symbol lexeme)))
+            ((:or "true" "false")                                                                         (token-BOOLEAN  (string->symbol lexeme)))
             (whitespace (basic-lexer input-port))
             ((eof) (token-EOF))))
 
 (define-tokens value-tokens
-  (NUMBER VARIABLE)
+  (NUMBER VARIABLE BOOLEAN STRING)
  )
 
 (define-empty-tokens empty-tokens
@@ -54,7 +56,7 @@
 
 ;test
 (define lex-this (lambda (lexer input) (lambda () (lexer input))))
-(define my-lexer (lex-this basic-lexer (open-input-string "heLLo switch 010.4 if")))
+(define my-lexer (lex-this basic-lexer (open-input-string "*a12bc* bca 012.5 do")))
 (my-lexer)
 (my-lexer)
 (my-lexer)
