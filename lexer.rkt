@@ -35,7 +35,7 @@
             ("switch"                       (token-SWITCH))
             ("case"                         (token-CASE))
 
-            ((:: "*" (complement (:: any-string "*" any-string)) "*")                                     (token-STRING   (string->symbol lexeme)))
+            ((:: "\"" (complement (:: any-string "\"" any-string)) "\"")                                     (token-STRING   (string->symbol lexeme)))
             ((:or (:+ (char-range #\0 #\9)) (:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9)))) (token-NUMBER   (string->number lexeme)))
             ((:+ alphabetic)                                                                              (token-VARIABLE (string->symbol lexeme)))
             ((:or "true" "false")                                                                         (token-BOOLEAN  (string->symbol lexeme)))
@@ -56,7 +56,8 @@
 
 ;test
 (define lex-this (lambda (lexer input) (lambda () (lexer input))))
-(define my-lexer (lex-this basic-lexer (open-input-string "*a12bc* bca 012.5 do")))
+(define my-lexer (lex-this basic-lexer (open-input-string "ab if 12 \"hello world\" 5")))
+(my-lexer)
 (my-lexer)
 (my-lexer)
 (my-lexer)
