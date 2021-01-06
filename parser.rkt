@@ -71,7 +71,7 @@
                 )
 
                (cexp
-                  [(MINUS cexp)         (list '- 0 $2)]
+                  [(MINUS cexp)         ]
                   [(LP exp RP)          (list $2)]
                   [(NUMBER)              $1]
                   [(NULL)                $1]
