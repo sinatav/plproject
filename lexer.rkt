@@ -11,7 +11,7 @@
             ["-"                            (token-MINUS)]
             ["*"                            (token-MULT)]
             ["/"                            (token-DIV)]
-            ["="                            (token-EQUALS)]
+            ["="                            (token-ASSIGN)]
             ["=="                           (token-BEQ)]
             ["!="                           (token-BNE)]
             [">"                            (token-GT)]
@@ -20,6 +20,8 @@
             [")"                            (token-RP)]
             ["["                            (token-LB)]
             ["]"                            (token-RB)]
+            ["{"                            (token-LC)]
+            ["}"                            (token-RC)]
             [","                            (token-COMMA)]
             [";"                            (token-SEMIC)]
             ["return"                       (token-RETURN)]
@@ -32,22 +34,23 @@
             ["null"                         (token-NULL)]
             ["switch"                       (token-SWITCH)]
             ["case"                         (token-CASE)]
+            ["true"                         (token-TRUE)]
+            ["false"                        (token-FALSE)]
 
-            [(:or "true" "false")                                                                         (token-BOOLEAN  ( if (equal? lexeme "true") #t #f))]
             [(:+ alphabetic)                                                                              (token-VARIABLE (string->symbol lexeme))]
             [(:or (:+ (char-range #\0 #\9)) (:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9)))) (token-NUMBER   (string->number lexeme))]
-            [(:: "\"" (complement (:: any-string "\"" any-string)) "\"")                                  (token-STRING   (substring lexeme 1 (- (string-length lexeme) 1)))]
+            [(:: #\" (complement (:: any-string #\" any-string)) #\")                                  (token-STRING   (substring lexeme 1 (- (string-length lexeme) 1)))]
             [whitespace (basic-lexer input-port)]
             [(eof) (token-EOF)]))
 
 (define-tokens value-tokens
-  (NUMBER VARIABLE BOOLEAN STRING)
+  (NUMBER VARIABLE STRING)
  )
 
 (define-empty-tokens empty-tokens
-  (PLUS MINUS MULT DIV EQUALS BEQ BNE GT LT
-   LP RP LB RB COMMA  SEMIC RETURN IF THEN ELSE
-   END WHILE DO NULL SWITCH CASE
+  (PLUS MINUS MULT DIV ASSIGN BEQ BNE GT LT
+   LP RP LB RB LC RC COMMA  SEMIC RETURN IF THEN ELSE
+   END WHILE DO NULL SWITCH CASE TRUE FALSE
    EOF)
  )
 

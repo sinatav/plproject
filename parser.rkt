@@ -22,9 +22,10 @@
              (error void)
              (tokens value-tokens empty-tokens)
              (grammar
+
                (command
-                  [(keyword)               (list 'begin $1)]
-                  [(command SEMIC keyword) (appened $1 (list $3))]
+                  [(keyword)                $1]
+                  [(command SEMIC keyword) (list $1 $3)]
                 )
 
                (keyword
@@ -35,7 +36,7 @@
                 )
 
                (while_statement
-                  [(WHILE exp DO command END) ]  ; TODO
+                  [(WHILE exp DO command END) (list 'while $2 $4)]
                 )
 
                (if_statement
@@ -43,58 +44,59 @@
                 )
 
                (assignment_statement
-                  [(VARIABLE EQUALS exp) (list 'set! $2 $4)]  ;maybe wrong
+                  [(VARIABLE ASSIGN exp) (list 'assign $1 $3)]
                 )
 
                (return
-                  [(RETURN exp) ]  ; TODO
+                  [(RETURN exp) (list 'return $2)]
                 )
 
                (exp
                   [(aexp) $1]
-                  [(aexp GT aexp)  (list '> $1 $3)]
-                  [(aexp LT aexp)  (list '< $1 $3)]
-                  [(aexp BEQ aexp) (list '= $1 $3)]
-                  [(aexp BNE aexp) (list 'not (list '= $1 $3))]
+                  [(aexp GT aexp)  (list 'gt $1 $3)]
+                  [(aexp LT aexp)  (list 'lt $1 $3)]
+                  [(aexp BEQ aexp) (list 'beq $1 $3)]
+                  [(aexp BNE aexp) (list 'bne $1 $3)]
                 )
 
                (aexp
                   [(bexp)             $1]
-                  [(bexp MINUS aexp) (list '- $1 $3)]
-                  [(bexp PLUS aexp)  (list '+ $1 $3)]
+                  [(bexp MINUS aexp) (list 'sub $1 $3)]
+                  [(bexp PLUS aexp)  (list 'add $1 $3)]
                 )
 
                (bexp
                   [(cexp)            $1]
-                  [(cexp MULT bexp) (list '* $1 $3)]
-                  [(cexp DIV bexp)  (list '/ $1 $3)]
+                  [(cexp MULT bexp) (list 'mul $1 $3)]
+                  [(cexp DIV bexp)  (list 'div $1 $3)]
                 )
 
                (cexp
-                  [(MINUS cexp)         ]
-                  [(LP exp RP)          (list $2)]
-                  [(NUMBER)              $1]
-                  [(NULL)                $1]
-                  [(VARIABLE)            $1]
-                  [(BOOLEAN)             $1]
-                  [(STRING)              $1]
-                  [(list)                $1]
-                  [(VARIABLE listMember) $1]
+                  [(MINUS cexp)          (list 'minus $2)]
+                  [(LP exp RP)           (list 'parenthese $2)]
+                  [(NUMBER)              (list 'number $1)]
+                  [(NULL)                (list 'null)]
+                  [(VARIABLE)            (list 'variable $1)]
+                  [(TRUE)                (list 'true)]
+                  [(FALSE)               (list 'false)]
+                  [(STRING)              (list 'string $1)]
+                  [(list)                (list 'list $1)]
+                  [(VARIABLE listMember) (list 'access $1 $2)]
                 )
 
                (list
-                  [(listValues) (list $1)]
-                  [(LB RB)       null]
+                  [(LB listValues RB) $2]
+                  [(LB RB)            'emptyList]
                 )
 
                (listValues
-                  [(exp)                  (list $1)]
-                  [(exp COMMA listValues) (append (list $1) $3)]
+                  [(exp)                  (list 'aslist $1)]
+                  [(exp COMMA listValues) (list 'append $1 $3)]
                 )
 
                (listMember
-                  [(LB exp RB)            (list $2)]
-                  [(LB exp RB listMember) (append (list $2) $4)]
+                  [(LB exp RB)             $2]
+                  [(LB exp RB listMember) (list $2 $4)]
                 )
               )
             )
