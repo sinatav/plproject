@@ -102,8 +102,87 @@
             )
  )
 
-;test
-(define lex-this (lambda (lexer input) (lambda () (lexer input))))
-(define my-lexer (lex-this simple-math-lexer (open-input-string "1+2+ 3 +   4")))
-(let ((parser-res (basic-parser my-lexer))) parser-res)
+(define initial-env '())
+(define (set-variable name value env) (cons (cons name value) env))
+(define (handle-eval valenv) (eval (first valenv) (second valenv)))
+(define (get-variable name env) (handle-eval (cond [(assoc name env) => cdr] [else (raise "error")])))
+(define (set-vars vars args def-env cur-env)
+    (cond
+      [(empty? vars) def-env]
+      [else (set-vars (rest vars) (rest args) (set-variable (first vars) (list (first args) cur-env) def-env) cur-env)]
+     )
+ )
 
+;GT '>'
+(define (eval-gt args env)
+  (let
+     (
+       [o1 (eval (first args) env)]
+       [o2 (eval (second args) env)]
+      )
+      (cond
+        [(and (number? o1) (number? o2)) (> o1 o2)]
+        [(and (string? o1) (string? o2)) (string>? o1 o2)]
+        [(and (list? o1) (number? o2)) (reduce and-f (broadcast > o1 o2))]
+        [(and (number? o1) (list? o2)) (reduce and-f (broadcast < o2 o1))]
+        [(and (list? o1) (string? o2)) (reduce and-f (broadcast string>? o1 o2))]
+        [(and (string? o1) (list? o2)) (reduce and-f (broadcast string<? o2 o1))]
+       )
+   )
+ )
+;LT '<'
+(define (eval-lt args env)
+  (let
+      (
+        [o1 (eval (first args) env)]
+        [o2 (eval (second args) env)]
+       )
+      (cond
+        [(and (number? o1) (number? o2)) (< o1 o2)]
+        [(and (string? o1) (string? o2)) (string<? o1 o2)]
+        [(and (list? o1) (number? o2)) (reduce and-f (broadcast < o1 o2))]
+        [(and (number? o1) (list? o2)) (reduce and-f (broadcast > o2 o1))]
+        [(and (list? o1) (string? o2)) (reduce and-f (broadcast string<? o1 o2))]
+        [(and (string? o1) (list? o2)) (reduce and-f (broadcast string>? o2 o1))]
+       )
+   )
+ )
+;BEQ '=='
+(define (eval-beq args env)
+  (let
+      (
+        [o1 (eval (first args) env)]
+        [o2 (eval (second args) env)]
+       )
+      (cond
+        [(and (number? o1) (number? o2)) (= o1 o2)]
+        [(and (string? o1) (string? o2)) (string=? o1 o2)]
+        [(and (eq? o1 'n) (eq? o2 'n)) #t]
+        [(and (boolean? o1) (boolean? o2)) (boolean=? o1 o2)]
+        [(and (list? o1) (list? o2)) (reduce and-f (list-list-op equal? o1 o2 #f))]
+;        [(and (list? o1) (number? o2)) (reduce and-f (broadcast = o1 o2))]
+;        [(and (number? o1) (list? o2)) (reduce and-f (broadcast = o2 o1))]
+;        [(and (list? o1) (string? o2)) (reduce and-f (broadcast string=? o1 o2))]
+;        [(and (string? o1) (list? o2)) (reduce and-f (broadcast string=? o2 o1))]
+;        [(and (list? o1) (boolean? o2)) (reduce and-f (broadcast boolean=? o1 o2))]
+;        [(and (boolean? o1) (list? o2)) (reduce and-f (broadcast boolean=? o2 o1))]
+;        [(and (list? o1) (eq? o2 'n)) (reduce and-f (broadcast eq? o1 o2))]
+;        [(and (eq? o1 'n) (list? o2)) (reduce and-f (broadcast eq? o2 o1))]
+        [else #f]
+       )
+   )
+ )
+;BNE '!="
+(define (eval-bne args env) (if (eval-beq args env) #f #t))
+
+
+
+
+;test
+(define (main input-path)
+    (define lex-this (lambda (lexer input) (lambda () (lexer input))))
+    (define my-lexer (lex-this pl-lexer (open-input-string (string-join (map ~a (append (file->lines "builtin.txt") (file->lines input-path))) " "))))
+    (define parse-tree (extract-commands (let ((parser-res (pl-parser my-lexer))) parser-res)))
+
+    (display (run parse-tree initial-env))
+)
