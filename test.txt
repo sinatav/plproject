@@ -1,0 +1,3 @@
+a = make_list(4, 3);
+b = pow(7, 3);
+return a * b
