@@ -37,9 +37,9 @@
             ["true"                         (token-TRUE)]
             ["false"                        (token-FALSE)]
 
-            [(:+ alphabetic)                                                                              (token-VARIABLE (string->symbol lexeme))]
+            [(:+ alphabetic)                                                                              (token-VARIABLE lexeme)]
             [(:or (:+ (char-range #\0 #\9)) (:: (:+ (char-range #\0 #\9)) #\. (:+ (char-range #\0 #\9)))) (token-NUMBER   (string->number lexeme))]
-            [(:: #\" (complement (:: any-string #\" any-string)) #\")                                  (token-STRING   (substring lexeme 1 (- (string-length lexeme) 1)))]
+            [(:: #\" (complement (:: any-string #\" any-string)) #\")                                     (token-STRING   (substring lexeme 1 (- (string-length lexeme) 1)))]
             [whitespace (basic-lexer input-port)]
             [(eof) (token-EOF)]))
 
@@ -86,7 +86,7 @@
                 )
 
                (assignment_statement
-                  [(VARIABLE ASSIGN exp) (list 'assign $1 $3)]
+                  [(VARIABLE ASSIGN exp) (list 'assign $3 $1)]
                 )
 
                (return
@@ -488,7 +488,7 @@
 ;test
 (define (main input-path)
     (define lex-this (lambda (lexer input) (lambda () (lexer input))))
-    (define my-lexer (lex-this basic-lexer (open-input-string (string-join (map ~a (append (file->lines "builtin.txt") (file->lines input-path))) " "))))
+    (define my-lexer (lex-this basic-lexer (open-input-string (string-join (map ~a (file->lines input-path))))))
     (define parse-tree (extract-commands (let ((parser-res (basic-parser my-lexer))) parser-res)))
 
     (display (run parse-tree initial-env))

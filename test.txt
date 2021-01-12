@@ -1,3 +1,8 @@
-a = make_list(4, 3);
-b = pow(7, 3);
-return a * b
+a = [2, 3, 5, 7];
+i = 0;
+sum = 0;
+while i < 4 do
+ sum = sum + a[i];
+ i = i + 1
+end;
+return sum
