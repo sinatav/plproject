@@ -147,7 +147,7 @@
 (define initial-env '())
 (define (set-variable name value env) (cons (cons name value) env))
 (define (handle-eval valenv) (eval (first valenv) (second valenv)))
-(define (get-variable name env) (handle-eval (cond [(assoc name env) => cdr] [else (raise "error")])))
+(define (get-variable name env) (handle-eval (cond [(assoc name env) => cdr] [else (raise "undefined variable")])))
 (define (set-vars vars args def-env cur-env)
     (cond
       [(empty? vars) def-env]
@@ -184,8 +184,8 @@
 
 (define (broadcast operation list-args scaler-arg)
   (cond
-    [(and (not (list? list-args)) (not (equal? operation >)) (not (equal? operation <)) (not (equal? operation string-append))) (if (check-same-type list-args scaler-arg) (operation list-args scaler-arg) #f)]
-    [(empty? list-args) (list)]
+    [(not (list? list-args)) (if (check-same-type list-args scaler-arg) (operation list-args scaler-arg) #f)]
+    [(empty? list-args) '()]
     [else (append (list (broadcast operation (first list-args) scaler-arg)) (broadcast operation (rest list-args) scaler-arg))]
    )
  )
@@ -225,6 +225,7 @@
         [(and (number? o1) (list? o2)) (reduce and-override (broadcast < o2 o1))]
         [(and (list? o1) (string? o2)) (reduce and-override (broadcast string>? o1 o2))]
         [(and (string? o1) (list? o2)) (reduce and-override (broadcast string<? o2 o1))]
+        [else #f]
        )
    )
  )
@@ -243,6 +244,7 @@
         [(and (number? o1) (list? o2)) (reduce and-override (broadcast > o2 o1))]
         [(and (list? o1) (string? o2)) (reduce and-override (broadcast string<? o1 o2))]
         [(and (string? o1) (list? o2)) (reduce and-override (broadcast string>? o2 o1))]
+        [else #f]
        )
    )
  )
@@ -260,14 +262,6 @@
         [(and (eq? o1 'n) (eq? o2 'n)) #t]
         [(and (boolean? o1) (boolean? o2)) (boolean=? o1 o2)]
         [(and (list? o1) (list? o2)) (reduce and-override (list-list-operation equal? o1 o2 #f))]
-;        [(and (list? o1) (number? o2)) (reduce and-f (broadcast = o1 o2))]
-;        [(and (number? o1) (list? o2)) (reduce and-f (broadcast = o2 o1))]
-;        [(and (list? o1) (string? o2)) (reduce and-f (broadcast string=? o1 o2))]
-;        [(and (string? o1) (list? o2)) (reduce and-f (broadcast string=? o2 o1))]
-;        [(and (list? o1) (boolean? o2)) (reduce and-f (broadcast boolean=? o1 o2))]
-;        [(and (boolean? o1) (list? o2)) (reduce and-f (broadcast boolean=? o2 o1))]
-;        [(and (list? o1) (eq? o2 'n)) (reduce and-f (broadcast eq? o1 o2))]
-;        [(and (eq? o1 'n) (list? o2)) (reduce and-f (broadcast eq? o2 o1))]
         [else #f]
        )
    )
@@ -292,8 +286,9 @@
         [(and (boolean? o1) (list? o2)) (broadcast or-override o2 o1)]
         [(and (string? o1) (string? o2)) (string-append o1 o2)]
         [(and (list? o1) (string? o2)) (broadcast string-append o1 o2)]
-        [(and (string? o1) (list? o2)) (elementwise reverse-str (broadcast string-append (elementwise reverse-str o2) (reverse-str o1)))] ; maybe wrong
+        [(and (string? o1) (list? o2)) (elementwise reverse-str (broadcast string-append (elementwise reverse-str o2) (reverse-str o1)))]
         [(and (list? o1) (list? o2)) (append o1 o2)]
+        [else (raise "invalid add")]
        )
    )
  )
@@ -309,6 +304,7 @@
         [(and (number? o1) (number? o2)) (- o1 o2)]
         [(and (list? o1) (number? o2)) (broadcast - o1 o2)]
         [(and (number? o1) (list? o2)) (broadcast * (broadcast - o2 o1) -1)] ; maybe wrong
+        [else (raise "invalid sub")]
        )
    )
  )
@@ -343,12 +339,13 @@
         [(and (number? o1) (number? o2)) (/ o1 o2)]
         [(and (list? o1) (number? o2)) (broadcast / o1 o2)]
         [(and (number? o1) (list? o2)) (broadcast * (elementwise reverse-num o2) o1)] ; maybe wrong
+        [else (raise "invalid div")]
        )
    )
  )
 
-(define (reverse-num x) (/ 1 x)) ; maybe useless
-(define (reverse-str x) (list->string (reverse (string->list x)))) ; maybe useless
+(define (reverse-num x) (/ 1 x))
+(define (reverse-str x) (list->string (reverse (string->list x))))
 
 ;MINUS (-x)
 (define (eval-minus args env)
@@ -369,10 +366,10 @@
 (define (eval-variable args env) (get-variable (first args) env))
 (define (eval-true args env) #t)
 (define (eval-false args env) #f)
-(define (eval-string args env) (string-trim (first args) "\"")) ; maybe wrong
+(define (eval-string args env) (string-trim (first args) "\""))
 (define (eval-list args env)
   (cond
-    [(eq? args 'emptylist) (list)]
+    [(eq?  args 'emptylist) '()]
     [(eq? (first args) 'aslist) (list (eval (second args) env))]
     [(eq? (first args) 'append) (append (list (eval (second args) env)) (eval-list (third args) env))]
    )
@@ -429,23 +426,23 @@
       [
         (and (list? exp) (not (empty? exp)) (list-contains eval-com-list (first exp)))
            (case (first exp)
-             ['gt (eval-gt (rest exp) env)]
-             ['lt (eval-lt (rest exp) env)]
-             ['beq (eval-beq (rest exp) env)]
-             ['bne (eval-bne (rest exp) env)]
-             ['sub (eval-sub (rest exp) env)]
-             ['add (eval-add (rest exp) env)]
-             ['mul (eval-mul (rest exp) env)]
-             ['div (eval-div (rest exp) env)]
-             ['minus (eval-minus (rest exp) env)]
-             ['number (eval-number (rest exp) env)]
-             ['null (eval-null (rest exp) env)]
-             ['variable (eval-variable (rest exp) env)]
-             ['true (eval-true (rest exp) env)]
-             ['false (eval-false (rest exp) env)]
-             ['string (eval-string (rest exp) env)]
-             ['list (eval-list (second exp) env)]
-             ['access (eval-access (rest exp) env)]
+             ['gt         (eval-gt (rest exp) env)]
+             ['lt         (eval-lt (rest exp) env)]
+             ['beq        (eval-beq (rest exp) env)]
+             ['bne        (eval-bne (rest exp) env)]
+             ['sub        (eval-sub (rest exp) env)]
+             ['add        (eval-add (rest exp) env)]
+             ['mul        (eval-mul (rest exp) env)]
+             ['div        (eval-div (rest exp) env)]
+             ['minus      (eval-minus (rest exp) env)]
+             ['number     (eval-number (rest exp) env)]
+             ['null       (eval-null (rest exp) env)]
+             ['variable   (eval-variable (rest exp) env)]
+             ['true       (eval-true (rest exp) env)]
+             ['false      (eval-false (rest exp) env)]
+             ['string     (eval-string (rest exp) env)]
+             ['list       (eval-list (second exp) env)]
+             ['access     (eval-access (rest exp) env)]
              ['parenthese (eval (second exp) env)]
             )
       ]

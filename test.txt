@@ -1,8 +1,4 @@
-a = [2, 3, 5, 7];
-i = 0;
-sum = 0;
-while i < 4 do
- sum = sum + a[i];
- i = i + 1
-end;
-return sum
+a = 2;
+b = [8, 6, 5, 4];
+c = a / b;
+return d
