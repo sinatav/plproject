@@ -303,7 +303,7 @@
       (cond
         [(and (number? o1) (number? o2)) (- o1 o2)]
         [(and (list? o1) (number? o2)) (broadcast - o1 o2)]
-        [(and (number? o1) (list? o2)) (broadcast * (broadcast - o2 o1) -1)] ; maybe wrong
+        [(and (number? o1) (list? o2)) (broadcast * (broadcast - o2 o1) -1)]
         [else (raise "invalid sub")]
        )
    )
@@ -338,7 +338,7 @@
       (cond
         [(and (number? o1) (number? o2)) (/ o1 o2)]
         [(and (list? o1) (number? o2)) (broadcast / o1 o2)]
-        [(and (number? o1) (list? o2)) (broadcast * (elementwise reverse-num o2) o1)] ; maybe wrong
+        [(and (number? o1) (list? o2)) (broadcast * (elementwise reverse-num o2) o1)]
         [else (raise "invalid div")]
        )
    )

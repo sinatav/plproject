@@ -1,4 +1,20 @@
-a = 2;
-b = [8, 6, 5, 4];
-c = a / b;
-return d
+a = 1;
+b = 1;
+counter = 0;
+mList = [10, 20, 30];
+
+if a == b
+ then
+  a = 2;
+  b = 2
+ else
+  a = 0;
+  b = 0
+end;
+
+while counter < 2 do
+  a = a + b;
+  counter = counter + 1
+end;
+
+return a + mList
